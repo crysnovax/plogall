@@ -1,0 +1,10 @@
+{
+  "name": "plogall",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Universal messaging infrastructure for WhatsApp and Telegram",
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": { "test": "node --test test/*.test.js" },
+  "engines": { "node": ">=20" }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "@plogall/core",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.js" },
+  "types": "./src/index.d.ts"
+}

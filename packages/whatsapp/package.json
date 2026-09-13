@@ -1,0 +1,9 @@
+{
+  "name": "@plogall/whatsapp",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": { ".": "./src/index.js" },
+  "types": "./src/index.d.ts",
+  "peerDependencies": { "@plogall/core": "0.1.x", "plogme": ">=1.0.0" },
+  "peerDependenciesMeta": { "plogme": { "optional": true } }
+}
