@@ -1,4 +1,4 @@
-import { ERROR_CODES, PlogallError, decorateMessage, wrapError } from '@plogall/core';
+import { ERROR_CODES, PlogallError, decorateMessage, renderMessage, wrapError } from '@plogall/core';
 
 export function normalizeTelegramContext(context, capabilities = {}) {
   const message = context?.message;
@@ -44,6 +44,7 @@ export class TelegramAdapter {
   get client() { return this.#bot; }
   get api() { return this.#bot?.api; }
   capabilities() { return { ...this.#capabilities }; }
+  render(content) { const rendered = renderMessage(content, this.#capabilities, this.name); const value = { ...rendered, text: rendered.text }; if (rendered.buttons?.length) value.reply_markup = { inline_keyboard: [rendered.buttons.map(button => ({ text: button.label, callback_data: String(button.action) }))] }; return value; }
   attach(app) { this.#app = app; }
 
   async connect() {
@@ -68,7 +69,7 @@ export class TelegramAdapter {
 
   async disconnect() { this.#bot?.stop?.(); this.state = 'disconnected'; await this.#app?._dispatch('connection.close', { platform: this.name }); }
   normalizeMessage(context) { return decorateMessage(normalizeTelegramContext(context, this.#capabilities), this); }
-  async sendMessage(chat, content) { this.#assertReady(); if (typeof content === 'string') return this.#operation('send', () => this.#bot.api.sendMessage({ chat_id: chat, text: content })); if (content?.text !== undefined) return this.#operation('send', () => this.#bot.api.sendMessage({ chat_id: chat, ...content })); throw new PlogallError(ERROR_CODES.INVALID_MESSAGE, 'Telegram universal send currently requires text content.', { platform: this.name }); }
+  async sendMessage(chat, content) { this.#assertReady(); const rendered = typeof content === 'string' ? { text: content } : this.render(content); const { degraded, omittedFeatures, buttons, media, metadata, type, ...value } = rendered; return this.#operation('send', () => this.#bot.api.sendMessage({ chat_id: chat, ...value })); }
   async send(chat, content) { return this.sendMessage(chat, content); }
   async reply(message, content) { const value = typeof content === 'string' ? { text: content } : { ...content }; const messageId = message.raw?.message?.message_id ?? message.raw?.callback_query?.message?.message_id; if (messageId != null) value.reply_parameters ??= { message_id: messageId }; return this.sendMessage(message.chat.id, value); }
   async react(message, text) { this.#assertFeature('react'); return this.#operation('react', () => this.#bot.api.setMessageReaction({ chat_id: message.chat.id, message_id: Number(message.id), reaction: [{ type: 'emoji', emoji: text }] })); }

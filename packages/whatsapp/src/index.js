@@ -1,4 +1,4 @@
-import { ERROR_CODES, PlogallError, decorateMessage, wrapError } from '@plogall/core';
+import { ERROR_CODES, PlogallError, decorateMessage, renderMessage, wrapError } from '@plogall/core';
 
 const object = value => value !== null && typeof value === 'object';
 const messageText = message => {
@@ -52,6 +52,7 @@ export class WhatsAppAdapter {
 
   get client() { return this.#socket; }
   capabilities() { return { ...this.#capabilities }; }
+  render(content) { const rendered = renderMessage(content, { ...this.#capabilities, buttons: false, media: false }, this.name); return rendered; }
   attach(app) { this.#app = app; }
 
   async connect() {
@@ -79,7 +80,7 @@ export class WhatsAppAdapter {
   }
 
   normalizeMessage(message) { return decorateMessage(normalizeWhatsAppMessage(message, this.#capabilities), this); }
-  async sendMessage(chat, content, options) { this.#assertReady(); return this.#operation('send', () => this.#socket.sendMessage(chat, content, options)); }
+  async sendMessage(chat, content, options) { this.#assertReady(); const rendered = typeof content === 'string' ? { text: content } : this.render(content); const value = { text: rendered.text }; return this.#operation('send', () => this.#socket.sendMessage(chat, value, options)); }
   async send(chat, content, options) { return this.sendMessage(chat, content, options); }
   async reply(message, content, options) { return this.sendMessage(message.chat.id, content, { ...options, quoted: message.raw }); }
   async react(message, text) { this.#assertFeature('react'); return this.#operation('react', () => this.sendMessage(message.chat.id, { react: { text, key: message.raw.key } })); }
